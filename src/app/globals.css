@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --foreground: #16181d;
+  --muted: #6b7280;
+  --border: #e2e5ea;
+  --accent: #4f46e5;
+  --accent-fg: #ffffff;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --success: #16a34a;
+
+  /* Paleta de visualización — validada contra la superficie #ffffff.
+     Orden fijo: el slot de una serie no cambia al filtrar. */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+  --viz-7: #4a3aa7;
+  --viz-8: #e34948;
+
+  /* Rampa ordinal de un solo tono, claro → oscuro. */
+  --viz-ord-1: #86b6ef;
+  --viz-ord-2: #5598e7;
+  --viz-ord-3: #2a78d6;
+  --viz-ord-4: #1c5cab;
+  --viz-ord-5: #104281;
+
+  /* Estado: reservados, siempre con ícono o texto al lado. */
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+}
+
+.dark {
+  --background: #0d0f13;
+  --surface: #14171d;
+  --surface-2: #1b1f27;
+  --foreground: #e8eaee;
+  --muted: #8f97a5;
+  --border: #262b34;
+  --accent: #818cf8;
+  --accent-fg: #0d0f13;
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --success: #4ade80;
+
+  /* Los mismos ocho tonos, escalonados para la superficie oscura #14171d:
+     no es un volteo automático, es una selección validada aparte. */
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+  --viz-7: #9085e9;
+  --viz-8: #e66767;
+
+  /* La rampa ordinal se invierte: en oscuro, "más" es más claro. */
+  --viz-ord-1: #184f95;
+  --viz-ord-2: #256abf;
+  --viz-ord-3: #3987e5;
+  --viz-ord-4: #6da7ec;
+  --viz-ord-5: #b7d3f6;
+
+  --viz-good: #0ca30c;
+  --viz-warning: #fab219;
+  --viz-serious: #ec835a;
+  --viz-critical: #d03b3b;
+
+  --viz-grid: #2c2c2a;
+  --viz-axis: #383835;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Instalada en el teléfono la app ocupa toda la pantalla, así que hay que
+   esquivar el notch, la barra de estado y la barra de gestos.
+
+   Los cuatro huecos viven en variables y no sueltos en cada regla porque
+   los necesitan también las capas `fixed` y los modales, que se posicionan
+   contra la ventana y no heredan ningún relleno. El segundo argumento de
+   `env()` cubre al navegador que no conoce la función: ahí valen cero y no
+   se rompe nada.
+
+   `max(..., 0px)` es la red de seguridad contra un `env()` negativo o
+   inválido, que colapsaría el relleno en vez de anularlo. */
+:root {
+  --safe-top: max(env(safe-area-inset-top, 0px), 0px);
+  --safe-right: max(env(safe-area-inset-right, 0px), 0px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  --safe-left: max(env(safe-area-inset-left, 0px), 0px);
+}
+
+/* Va en el contenedor y no en el `body`: sumado a una altura de pantalla
+   completa, el relleno del body desbordaría y aparecería un scroll
+   fantasma. */
+.safe-area {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* El modal nativo vive en la capa superior del navegador: no es hijo de
+   nadie, así que el resguardo del contenedor no lo alcanza y su botón de
+   cerrar terminaba abajo del reloj y la batería.
+
+   Fijar los cuatro bordes y dejar los márgenes en `auto` lo centra dentro
+   del rectángulo seguro en lugar de dentro de la ventana. Centrar contra
+   la ventana no alcanzaba: con el hueco de arriba (barra de estado) más
+   grande que el de abajo, el modal alto se seguía metiendo debajo. */
+.modal-safe {
+  top: calc(var(--safe-top) + 1rem);
+  right: calc(var(--safe-right) + 1rem);
+  bottom: calc(var(--safe-bottom) + 1rem);
+  left: calc(var(--safe-left) + 1rem);
+  margin: auto;
+  /* Sin esto el alto fijado por los bordes lo estiraría de punta a punta. */
+  height: fit-content;
+  max-height: 100%;
+}
+
+/* Los contenedores con scroll propio no encadenan su desplazamiento con
+   la página: al llegar al final de la tabla no se arrastra todo lo de
+   atrás.
+
+   Ojo con extender esto al `body`: ahí desactivaría el gesto de tirar
+   hacia abajo para recargar, y en la app instalada —donde no hay barra de
+   navegador— ese gesto es la única forma cómoda de refrescar. */
+[class*="overflow-"] {
+  overscroll-behavior: contain;
+}
+
+@media (display-mode: standalone) {
+  /* Mantener presionado no debe ofrecer "copiar" sobre la interfaz; en
+     los campos de texto, sí. */
+  body {
+    -webkit-touch-callout: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-touch-callout: default;
+    user-select: text;
+  }
+}
+
+/* En iOS, un campo con letra menor a 16 px hace que Safari acerque el
+   zoom al enfocarlo y la pantalla queda desencuadrada. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Franja que se desplaza de costado sin mostrar barra ni permitir
+   desplazamiento vertical.
+
+   Declarar solo `overflow-x` no alcanza: por regla de CSS, si un eje deja
+   de ser `visible`, el otro pasa a `auto` solo. Eso hacía que las pestañas
+   tuvieran un scroll vertical de 1 px —el que asoma por el margen
+   negativo del borde activo— también en pantallas donde entraban todas. */
+.tab-strip {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tab-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scrollbars discretas para las vistas densas (tabla, Gantt, Kanban). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Los inputs nativos heredan el tema en lugar del look del sistema. */
+input,
+select,
+textarea,
+button {
+  color: inherit;
+  font: inherit;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}

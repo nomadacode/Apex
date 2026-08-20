@@ -1,0 +1,12 @@
+# Lo que no tiene que entrar a la imagen. Sin esto, el `COPY . .` se lleva
+# el node_modules de macOS —con binarios nativos compilados para Mac, que
+# adentro de un contenedor Linux no arrancan— y la base local.
+node_modules
+.next
+.git
+data
+docs
+coverage
+*.tsbuildinfo
+.DS_Store
+.env*
