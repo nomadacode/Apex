@@ -614,6 +614,14 @@ function TaskBar({
         {`${task.title}\n${formatDate(start)} → ${formatDate(end)}\n${task.progress}% completado`}
       </title>
 
+      {/* El cuerpo es un tinte del fondo, no el color pleno, y el borde
+          lleva el color entero. Así el título de adentro puede usar el color
+          de texto normal del tema y leerse siempre: contra un tinte suave
+          contrasta igual de bien en claro que en oscuro, y da lo mismo qué
+          color se le haya puesto al proyecto —incluso uno casi negro—.
+          Pintar la barra a pleno obligaba a adivinar el color del texto, que
+          es un problema sin solución cuando el color lo elige quien usa la
+          app y los tokens además cambian con el tema. */}
       <rect
         x={x}
         y={barY}
@@ -621,23 +629,42 @@ function TaskBar({
         height={barHeight}
         rx={3}
         fill={color}
-        opacity={status?.isCancelled ? 0.3 : 0.75}
+        fillOpacity={status?.isCancelled ? 0.09 : 0.22}
+        stroke={color}
+        strokeOpacity={status?.isCancelled ? 0.3 : 0.85}
+        strokeWidth={1}
         className="cursor-grab"
         onPointerDown={(e) => onPointerDown(e, task, "move")}
         onDoubleClick={onOpen}
       />
 
-      {/* Progreso dentro de la barra */}
+      {/* El progreso es un segundo tinte del mismo color, no el color pleno:
+          la diferencia entre los dos alcanza para leer cuánto va hecho, y el
+          título sigue contrastando esté sobre la parte hecha o sobre la
+          pendiente.
+
+          Ojo con el valor: este tinte se apila sobre el de la barra, así que
+          el resultado es 1-(1-0,22)(1-0,26) ≈ 0,42, no 0,26. Subirlo hasta
+          que "se note" tira el contraste del título abajo del mínimo.
+
+          El recorte lo mantiene dentro de las esquinas redondeadas, así el
+          borde entre hecho y pendiente queda recto. */}
       {task.progress > 0 ? (
-        <rect
-          x={x}
-          y={barY}
-          width={(width * task.progress) / 100}
-          height={barHeight}
-          rx={3}
-          fill={color}
-          pointerEvents="none"
-        />
+        <>
+          <clipPath id={`barra-${task.id}`}>
+            <rect x={x} y={barY} width={width} height={barHeight} rx={3} />
+          </clipPath>
+          <rect
+            x={x}
+            y={barY}
+            width={(width * task.progress) / 100}
+            height={barHeight}
+            fill={color}
+            fillOpacity={status?.isCancelled ? 0.1 : 0.26}
+            clipPath={`url(#barra-${task.id})`}
+            pointerEvents="none"
+          />
+        </>
       ) : null}
 
       {/* Asas de redimensionado */}
@@ -665,9 +692,8 @@ function TaskBar({
           x={x + 5}
           y={barY + barHeight / 2 + 3}
           fontSize={9}
-          fill="#fff"
+          fill="var(--color-foreground)"
           pointerEvents="none"
-          style={{ mixBlendMode: "difference" }}
         >
           {task.title.slice(0, Math.floor(width / 6))}
         </text>
