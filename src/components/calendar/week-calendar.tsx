@@ -105,7 +105,19 @@ export function WeekCalendar({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-7 gap-2 overflow-x-auto">
+      <div
+        className={cn(
+          "grid min-h-0 flex-1 gap-2 overflow-x-auto",
+          // El mínimo va acá, en la pista de la grilla, y no en la columna:
+          // `grid-cols-7` es `repeat(7, minmax(0, 1fr))` y deja que la pista
+          // se achique hasta cero, así que un `min-w` en el hijo no la
+          // ensancha — simplemente lo desborda encima de la columna vecina.
+          // Con el mínimo en la pista, la grilla se pasa de ancho y aparece
+          // el desplazamiento de costado, que es lo que queremos.
+          "grid-cols-[repeat(7,minmax(8rem,1fr))]",
+          "sm:grid-cols-[repeat(7,minmax(10rem,1fr))]",
+        )}
+      >
         {days.map((day) => {
           const items = byDay.get(day) ?? [];
           const working = isWorkday(day, workspace.calendar);
@@ -116,7 +128,7 @@ export function WeekCalendar({
             <section
               key={day}
               className={cn(
-                "flex min-h-0 min-w-32 flex-col rounded-lg border bg-surface sm:min-w-40",
+                "flex min-h-0 flex-col rounded-lg border bg-surface",
                 isToday ? "border-accent" : "border-border",
                 !working && "bg-surface-2/40",
               )}
@@ -146,14 +158,23 @@ export function WeekCalendar({
                     style={{ width: `${(items.length / maxLoad) * 100}%` }}
                   />
                 </div>
-                {holiday ? (
-                  <p className="mt-0.5 truncate text-[10px] text-warning">
-                    {workspace.holidays.find((h) => h.date === day)
-                      ?.description || "Festivo"}
-                  </p>
-                ) : !working ? (
-                  <p className="mt-0.5 text-[10px] text-muted">No laborable</p>
-                ) : null}
+                {/* Se dibuja siempre, con texto o con un espacio duro: si la
+                    línea apareciera solo los días no laborables, esos
+                    encabezados serían más altos y las tarjetas de cada columna
+                    arrancarían a distinta altura. */}
+                <p
+                  className={cn(
+                    "mt-0.5 truncate text-[10px]",
+                    holiday ? "text-warning" : "text-muted",
+                  )}
+                >
+                  {holiday
+                    ? workspace.holidays.find((h) => h.date === day)
+                        ?.description || "Festivo"
+                    : !working
+                      ? "No laborable"
+                      : "\u00A0"}
+                </p>
               </header>
 
               <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-1.5">
