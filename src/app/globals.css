@@ -156,11 +156,30 @@ body {
    la página: al llegar al final de la tabla no se arrastra todo lo de
    atrás.
 
+   Solo el eje vertical, y esto importa. Contener también el horizontal
+   rompía el Kanban: cada columna se desplaza en vertical, así que también
+   cuenta como contenedor de scroll en horizontal aunque no le sobre ancho.
+   Con el eje X contenido, un gesto de costado sobre una columna moría ahí
+   en vez de pasarle el desplazamiento al tablero, y el tablero solo se
+   podía mover apoyando el cursor sobre su barra.
+
    Ojo con extender esto al `body`: ahí desactivaría el gesto de tirar
    hacia abajo para recargar, y en la app instalada —donde no hay barra de
    navegador— ese gesto es la única forma cómoda de refrescar. */
 [class*="overflow-"] {
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+}
+
+/* En los que sí se desplazan de costado, el eje horizontal se contiene acá.
+   Sin esto, pasarse del borde con dos dedos en el trackpad dispara el gesto
+   de "volver atrás" del navegador y te saca de la pantalla sin querer.
+
+   El selector es a propósito el del eje X: una columna con `overflow-y-auto`
+   no coincide, y por eso puede seguir pasándole el gesto a su contenedor. */
+[class*="overflow-x-"],
+[class*="overflow-auto"],
+.tab-strip {
+  overscroll-behavior-x: contain;
 }
 
 @media (display-mode: standalone) {
