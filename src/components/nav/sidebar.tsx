@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/cn";
-import { useLocalFlag } from "@/lib/use-local-flag";
+import { recordarBarraComprimida } from "@/lib/sidebar-preference";
 
 /** El menú tiene una entrada por sección, no por vista.
  *
@@ -51,7 +51,6 @@ const WORK_ROUTES = [
   "/matriz",
 ];
 
-const STORAGE_KEY = "apex:sidebar-collapsed";
 
 /**
  * Navegación. Tiene dos formas según el ancho:
@@ -61,9 +60,17 @@ const STORAGE_KEY = "apex:sidebar-collapsed";
  * - En escritorio es una columna fija que además se puede comprimir a
  *   solo íconos.
  */
-export function Sidebar({ workspaceName }: { workspaceName: string }) {
+export function Sidebar({
+  workspaceName,
+  comprimida,
+}: {
+  workspaceName: string;
+  /** Viene del servidor, leída de la cookie: el primer render ya sale con
+   *  el ancho correcto. */
+  comprimida: boolean;
+}) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useLocalFlag(STORAGE_KEY);
+  const [collapsed, setCollapsed] = useState(comprimida);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Con el cajón abierto no se scrollea lo de atrás.
@@ -146,7 +153,11 @@ export function Sidebar({ workspaceName }: { workspaceName: string }) {
             <X className="size-5" />
           </button>
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {
+              const siguiente = !collapsed;
+              setCollapsed(siguiente);
+              recordarBarraComprimida(siguiente);
+            }}
             aria-label={collapsed ? "Expandir la barra" : "Comprimir la barra"}
             aria-expanded={!collapsed}
             title={collapsed ? "Expandir la barra" : "Comprimir la barra"}
