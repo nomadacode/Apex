@@ -230,13 +230,25 @@ body {
   scrollbar-color: var(--border) transparent;
 }
 
-/* Los inputs nativos heredan el tema en lugar del look del sistema. */
-input,
-select,
-textarea,
-button {
-  color: inherit;
-  font: inherit;
+/* Los inputs nativos heredan el tema en lugar del look del sistema.
+ *
+ * Va dentro de `@layer base` a propósito. Suelta —fuera de toda capa— esta
+ * regla le gana a las utilidades de Tailwind, que viven en `@layer
+ * utilities`: en la cascada, lo que no está en ninguna capa vence a lo que
+ * sí, sin importar la especificidad. Eso hacía que un `<button>` ignorara
+ * tanto su color (`text-accent-fg`) como su tamaño de texto (`text-xs`) y
+ * heredara los de la página.
+ *
+ * En `base`, las utilidades vuelven a mandar y esto queda como lo que es:
+ * un punto de partida. */
+@layer base {
+  input,
+  select,
+  textarea,
+  button {
+    color: inherit;
+    font: inherit;
+  }
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
