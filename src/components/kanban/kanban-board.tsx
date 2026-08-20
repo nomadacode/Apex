@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useOptimistic, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -52,12 +52,19 @@ export function KanbanBoard({
   const { get, set, clear, activeCount } = useFilters();
   const [creating, setCreating] = useState(false);
   const [dragging, setDragging] = useState<Task | null>(null);
-  /** Copia local para que la tarjeta se mueva al instante y recién
-   *  después se confirme contra la base. Si falla, se descarta. */
-  const [optimistic, setOptimistic] = useState<Task[] | null>(null);
-
   const sortMode = (get(PARAM.sort) || "manual") as SortMode;
-  const board = optimistic ?? tasks;
+
+  /** La tarjeta se mueve al instante y React sostiene ese estado hasta que
+   *  el refresco trae los datos reales. Sin esto hay un hueco —corto contra
+   *  localhost, medio segundo contra un servidor real— en el que la vista
+   *  vuelve a pintar el estado anterior y la tarjeta pega un salto. */
+  const [board, moveCard] = useOptimistic(
+    tasks,
+    (state: Task[], move: { taskId: number; stageId: number | null }) =>
+      state.map((t) =>
+        t.id === move.taskId ? { ...t, kanbanStageId: move.stageId } : t,
+      ),
+  );
 
   const childCount = useMemo(() => {
     const map = new Map<number, number>();
@@ -129,19 +136,11 @@ export function KanbanBoard({
       return;
     }
 
-    const snapshot = board;
-    setOptimistic(
-      board.map((t) =>
-        t.id === taskId ? { ...t, kanbanStageId: targetStage } : t,
-      ),
-    );
-
     run(() => moveTask(taskId, targetStage, ordered.map((t) => t.id)), {
-      onSuccess: () => setOptimistic(null),
+      optimistic: () => moveCard({ taskId, stageId: targetStage }),
       onError: (result) => {
-        // La tarjeta vuelve a su lugar: nada de estados fantasma.
-        setOptimistic(snapshot);
-        setTimeout(() => setOptimistic(null), 0);
+        // Al cerrarse la transición sin refresco, la tarjeta vuelve sola a su
+        // lugar: nada de estados fantasma.
         toast.error(result.error, { description: result.hint });
       },
     });

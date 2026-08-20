@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useOptimistic, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -52,9 +52,18 @@ export function EisenhowerMatrix({
   const { run } = useAction();
   const { set, clear, activeCount } = useFilters();
   const [dragging, setDragging] = useState<Task | null>(null);
-  const [optimistic, setOptimistic] = useState<Task[] | null>(null);
-
-  const board = optimistic ?? tasks;
+  /** La tarjeta cambia de cuadrante al instante y React sostiene ese estado
+   *  hasta que el refresco trae los datos reales. Ver la nota equivalente en
+   *  el tablero Kanban. */
+  const [board, moveCard] = useOptimistic(
+    tasks,
+    (state: Task[], move: { taskId: number; important: boolean; urgent: boolean }) =>
+      state.map((t) =>
+        t.id === move.taskId
+          ? { ...t, important: move.important, urgent: move.urgent }
+          : t,
+      ),
+  );
 
   const grouped = useMemo(() => {
     const map = new Map<Quadrant, Task[]>(
@@ -82,16 +91,9 @@ export function EisenhowerMatrix({
     const { important, urgent } = QUADRANTS[target];
     if (task.important === important && task.urgent === urgent) return;
 
-    const snapshot = board;
-    setOptimistic(
-      board.map((t) => (t.id === taskId ? { ...t, important, urgent } : t)),
-    );
-
     run(() => updateTask(taskId, { important, urgent }), {
-      onSuccess: () => setOptimistic(null),
+      optimistic: () => moveCard({ taskId, important, urgent }),
       onError: (result) => {
-        setOptimistic(snapshot);
-        setTimeout(() => setOptimistic(null), 0);
         toast.error(result.error, { description: result.hint });
       },
     });

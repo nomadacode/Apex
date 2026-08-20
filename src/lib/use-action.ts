@@ -20,11 +20,17 @@ export function useAction() {
     action: () => Promise<ActionResult<T>>,
     options: {
       success?: string;
+      /** Se ejecuta al abrir la transición, antes de esperar al servidor.
+       *  Ahí adentro va la actualización de `useOptimistic`: así React
+       *  sostiene el valor optimista hasta que el refresco trae los datos
+       *  reales, en vez de soltarlo apenas responde la acción. */
+      optimistic?: () => void;
       onSuccess?: (data: T) => void;
       onError?: (result: { error: string; hint?: string }) => void;
     } = {},
   ) {
     startTransition(async () => {
+      options.optimistic?.();
       const result = await action();
       if (result.ok) {
         if (options.success) toast.success(options.success);
